@@ -1,4 +1,4 @@
-# Week 02 - 김성휘
+<img width="1768" height="76" alt="스크린샷 2026-05-03 234914" src="https://github.com/user-attachments/assets/dcd7765d-8f8c-4aac-b1f4-a5b554525a7a" /># Week 02 - 김성휘
 
 # 2 주차 - 섹션 4, 5, 6
 
@@ -121,7 +121,7 @@ boards:page:1:size:19
 
 - `cacheManager` : 사용할 `cacheManager` (`boardCacheManager` 클래스) 의 Bean 이름을 지정
 
-![image.png](attachment:e104d3aa-da09-4451-9675-095508bb402c:image.png)
+<img width="1666" height="109" alt="스크린샷 2026-05-03 234754" src="https://github.com/user-attachments/assets/1b4570a8-775f-4bfb-88cb-6a43a6ddb575" />
 
 ```prolog
 2026-05-03T23:47:36.079+09:00 TRACE 7868 --- [nio-8080-exec-3] o.s.cache.interceptor.CacheInterceptor   : No cache entry for key 'boards:page:1:size:10' in cache(s) [getBoards]
@@ -132,7 +132,7 @@ Hibernate: select count(b1_0.id) from boards b1_0
 
 → No cache → DB 조회해서 SQL문 실행 → create cache(DB에서 조회한 데이터를 캐시에 저장)
 
-![image.png](attachment:4d4ccc3c-8387-4041-b3e0-132c4e3aa419:image.png)
+<img width="1768" height="76" alt="스크린샷 2026-05-03 234914" src="https://github.com/user-attachments/assets/fb63d2ba-e619-419b-a521-91bc486d12be" />
 
 ```prolog
 2026-05-03T23:48:59.339+09:00 TRACE 7868 --- [nio-8080-exec-7] o.s.cache.interceptor.CacheInterceptor   : Computed cache key 'boards:page:1:size:10' for operation Builder[public java.util.List com.example.redisinspring.BoardService.getBoards(int,int)] caches=[getBoards] | key=''boards:page:' + #page + ':size:' + #size' | keyGenerator='' | cacheManager='boardCacheManager' | cacheResolver='' | condition='' | unless='' | sync='false'
@@ -144,7 +144,7 @@ Hibernate: select count(b1_0.id) from boards b1_0
 
 redis-cli 로 확인
 
-![image.png](attachment:2be8c7c2-d566-4755-aea1-7d462afd3f88:image.png)
+<img width="1097" height="342" alt="스크린샷 2026-05-03 235247" src="https://github.com/user-attachments/assets/4591c259-fb2a-4ea5-b21a-dadc893110ab" />
 
 ---
 
