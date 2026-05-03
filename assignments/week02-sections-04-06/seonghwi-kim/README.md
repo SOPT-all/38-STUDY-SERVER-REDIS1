@@ -114,9 +114,6 @@ boards:page:1:size:19
 
 - `cacheNames` : 캐시 이름을 설정
 - `key` : Redis에 저장할 Key의 이름을 설정
-
-  [Redis에서 Key 네이밍 컨벤션 익히기](https://www.notion.so/Redis-Key-590f7cc86aff4982b1eca3a9c8368529?pvs=21)
-
 - `cacheManager` : 사용할 `cacheManager` (`boardCacheManager` 클래스) 의 Bean 이름을 지정
 
 <img width="1666" height="109" alt="스크린샷 2026-05-03 234754" src="https://github.com/user-attachments/assets/1b4570a8-775f-4bfb-88cb-6a43a6ddb575" />
