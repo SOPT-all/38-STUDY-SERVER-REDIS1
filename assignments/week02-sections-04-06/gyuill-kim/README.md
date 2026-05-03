@@ -746,11 +746,11 @@ Cache Penetration은 존재하지 않는 데이터를 계속 조회해 캐시를
 - 요청 파라미터를 검증한다.
 - Bloom Filter 같은 자료구조로 존재 가능성을 먼저 검사한다.
 
-### 7-5. Cache Snowball
+### 7-5. Cache Avalanche
 
-Cache Snowball은 많은 캐시가 비슷한 시점에 한꺼번에 만료되면서 DB 부하가 급증하는 문제입니다.
+Cache Avalanche는 많은 캐시가 비슷한 시점에 한꺼번에 만료되면서 DB 부하가 급증하는 문제입니다.  
 
-Cache Stampede가 특정 인기 키 하나의 문제라면, Cache Snowball은 여러 키가 동시에 만료되는 문제에 가깝습니다.
+Cache Stampede가 특정 인기 키 하나의 문제라면, Cache Avalanche는 여러 키가 동시에 만료되는 문제에 가깝습니다.
 
 해결 방법은 다음과 같습니다.
 
