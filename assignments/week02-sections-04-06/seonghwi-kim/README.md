@@ -152,11 +152,11 @@ redis-cli 로 확인
 
 1. Redis 캐시 사용 전 → 평균 약 350 ms
 
-   ![image.png](attachment:059487af-65f6-4a60-8386-3ab8769a6aae:image.png)
+   <img width="1484" height="862" alt="스크린샷 2026-05-04 004031" src="https://github.com/user-attachments/assets/cc1d55e1-6ccd-47dd-ba18-b171bee17a0a" />
 
 2. Redis 캐시 사용 후 → 평균 약 14 ms
 
-   ![image.png](attachment:dcd433b1-214b-4cbf-af4d-72dfaad22bbc:image.png)
+   <img width="1499" height="867" alt="스크린샷 2026-05-04 004326" src="https://github.com/user-attachments/assets/80680b67-2eda-4e9f-a106-52e3409eec26" />
 
 
 결과: Redis 캐시 적용 전 평균 응답 시간은 약 350ms였고, 적용 후 약 14ms로 감소하여 **약 25배의 성능 향상**을 확인했다.
