@@ -291,7 +291,7 @@ public BoardResponse getBoard(Long id) {
 
 - **주의할 점**
 
-```
+```java
 @Cacheable(value = "boards", key = "#id")
 public BoardResponse getBoard(Long id) {
     boardRepository.increaseViewCount(id);
