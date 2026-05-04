@@ -263,13 +263,17 @@ keys *
 
 ## `@Cacheable`, `@CachePut`, `@CacheEvict` 차이
 
-Spring Cache에서는 캐시를 다루기 위해 대표적으로 `@Cacheable`, `@CachePut`, `@CacheEvict`를 사용할 수 있다.
+Spring Cache에서는 캐시를 직접 get, put, delete 하는 코드를 작성하지 않아도, 어노테이션을 통해 메서드 단위로 캐싱 전략을 적용할 수 있다.
 
 ### `@Cacheable`
 
-**캐시에 데이터가 있으면 메서드를 실행하지 않고, 캐시에 저장된 값을 바로 반환**한다.
+> **캐시에 데이터가 있으면 메서드를 실행하지 않고, 캐시에 저장된 값을 바로 반환**
 
-캐시에 데이터가 없을 때만 메서드가 실행되고, 실행 결과가 캐시에 저장된다.
+메서드가 호출되면 Spring은 먼저 캐시에 해당 key로 저장된 값이 있는지 확인한다.
+
+캐시에 값이 있으면 메서드 자체를 실행하지 않고 캐시에 있는 값을 바로 반환한다.
+
+캐시에 값이 없을 때만 실제 메서드를 실행하고, 그 결과를 캐시에 저장한다.
 
 ```java
 @Cacheable(value = "boards", key = "#id")
@@ -281,11 +285,36 @@ public BoardResponse getBoard(Long id) {
 }
 ```
 
-즉, `@Cacheable`은 조회 성능을 개선할 때 주로 사용된다.
+여기서 value = "boards"는 캐시 이름이고, key = "#id"는 캐시 데이터를 구분하는 기준이다.
+
+실제로 `@Cacheable`은 같은 입력에 대해 같은 결과가 나오는 조회 메서드에 적용해 조회 성능을 개선할 때 주로 사용된다.
+
+- **주의할 점**
+
+```
+@Cacheable(value = "boards", key = "#id")
+public BoardResponse getBoard(Long id) {
+    boardRepository.increaseViewCount(id);
+    Board board = boardRepository.findById(id).orElseThrow();
+
+    return BoardResponse.from(board);
+}
+```
+
+`@Cacheable`이 붙은 메서드는 캐시 hit가 발생하면 메서드 내부 로직이 아예 실행되지 않는다.
+따라서, 조회 외에 로그 저장, 조회수 증가, 권한 검증처럼 반드시 실행되어야 하는 부수 효과가 있는 로직을 함께 넣으면 의도와 다르게 동작할 수 있다!
+위 예시 코드에서는 처음 조회할 때는 조회수가 증가하지만, 이후 캐시에 값이 있으면 메서드가 실행되지 않기 때문에 조회수 증가 로직도 실행되지 않는다.
+즉, `@Cacheable`은 순수 조회에 가까운 메서드에 적용하는 것이 좋다.
 
 ### `@CachePut`
 
-**캐시 존재 여부와 관계없이 메서드를 항상 실행**한다. 그리고, 메서드 실행 결과를 캐시에 저장하거나 갱신한다.
+> **캐시 존재 여부와 관계없이 메서드를 항상 실행해 캐시 갱신**
+
+`@Cacheable`이 캐시에 값이 있으면 메서드를 실행하지 않는 것과 달리, `@CachePut`은 항상 메서드를 실행한다.
+
+즉, 조회 성능의 목적보다는 무조건 최신 값을 반영해야 하는 경우에 적합하다.
+
+예를 들어, DB 수정 작업을 수행한 뒤, 수정된 결과를 캐시에 바로 반영하고 싶을 때 사용할 수 있다.
 
 ```java
 @CachePut(value = "boards", key = "#id")
@@ -299,13 +328,9 @@ public BoardResponse updateBoard(Long id, BoardUpdateRequest request) {
 }
 ```
 
-`@Cacheable`이 캐시에 값이 있으면 메서드를 실행하지 않는 것과 달리, `@CachePut`은 항상 메서드를 실행한다.
-
-따라서, DB 수정 작업을 수행한 뒤, 수정된 결과를 캐시에 바로 반영하고 싶을 때 사용할 수 있다.
-
 ### `@CacheEvict`
 
-**캐시에 저장된 데이터를 제거**할 때 사용한다.
+> **캐시에 저장된 데이터 제거**
 
 게시글을 수정하거나 삭제했는데 캐시를 그대로 두면, 이후 조회 시 수정 전 데이터가 반환될 수 있다.
 
@@ -317,6 +342,35 @@ public void deleteBoard(Long id) {
     boardRepository.deleteById(id);
 }
 ```
+
+- **`allEntries = true`**
+
+특정 key 하나만 삭제하는 것이 아니라, 해당 캐시 영역 전체를 삭제하는 방법!
+
+```java
+@CacheEvict(value = "boards", allEntries = true)
+public void deleteAllBoards() {
+    boardRepository.deleteAll();
+}
+```
+
+예를 들어, 게시글 전체 삭제, 카테고리 구조 변경, 권한 정책 변경처럼 여러 캐시 데이터가 한 번에 무효화되어야 할 때 사용할 수 있다.
+
+### `@CachePut` vs `@CacheEvict`
+
+수정 작업 이후 캐시를 처리하는 방법은 크게 두 가지다.
+
+1. `@CachePut`으로 수정된 결과를 캐시에 바로 반영
+
+수정 직후 캐시가 최신 상태로 유지되고, 다음 조회 요청에서 DB를 다시 조회하지 않아도 된다는 장점이 있지만,
+
+수정 메서드의 반환값이 실제 조회 메서드에서 사용하는 캐시 값과 같은 형태여야 한다.
+
+2. `@CacheEvict`으로 기존 캐시 삭제
+
+캐시를 비워두고, 다음 조회 때 DB에서 최신 데이터를 다시 가져오게 한다.
+
+반환값 형태를 동일하게 맞춰줘야 하는 수고를 덜어주기 때문에 구현이 단순하고 데이터 불일치 위험이 적다.
 
 ### 차이 정리
 
