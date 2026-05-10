@@ -16,7 +16,8 @@
 
 ## **🏗️ EC2, RDS, Spring Boot, Redis를 활용한 아키텍처 구성**
 
-![Untitled](https://prod-files-secure.s3.us-west-2.amazonaws.com/e35a8144-c5ff-40f0-b123-384a331e35bb/38e15ac7-1003-4f46-b18f-ec69c82c0e81/Untitled.png)
+<img width="704" height="433" alt="image" src="https://github.com/user-attachments/assets/e8f01998-034d-449e-9821-ec045b6f7b52" />
+
 
 - EC2 내부에 Spring 과 Redis를 같이 설치 (서로 통신할 수 있게 세팅)
 - RDS 를 스프링의 데이터 베이스 이용
@@ -31,26 +32,18 @@
 - 네트워크 설정
     - VPC는 기본값으로
     - 보안그룹
-
-      ![image.png](attachment:804badcf-f632-4ef9-8bc1-c406be7d6474:image.png)
-
     - 나머지는 기본값으로 해서 인스턴스 생성하기
 
 ## **🗄️ RDS**
 
 데이터 베이스 생성(전체 구성) → MySQL → 템플릿: 프리티어 → 가용성 및 내구성: 단일 AZ DB 인스턴스 배포(인스턴스 1개) → DB 인스턴스 식별자(DB 이름 설정)
 
-![image.png](attachment:4a046147-eec5-4c41-8287-f757f9ac30b0:image.png)
-
 나머지는 디폴트로 하고, 퍼블릭 엑세스를 ‘예’로 설정 (외부에서 DB로 접근을 쉽게 하기 위해서)
 
 추가 구성 → 초기 데이터베이스 이름 설정 → 자동 백업 해제 → 데이터 베이스 생성
 
-![image.png](attachment:5404b513-99db-44ce-b76d-8be95f460b74:image.png)
 
 생성된 RDS에 들어가서 보안그룹 수정 → 인바운드 규칙 편집 → MySQL(3306), 모든 IPv4 허용으로 추가 → 규칙 저장
-
-![image.png](attachment:409c79d8-3e44-4820-8206-2555395182f6:image.png)
 
 방금 만든 EC2 를 연결(원격 접속)
 
@@ -64,7 +57,7 @@
     ```
 
 
-1. **Redis 잘 설치됐는 지 확인**
+2. **Redis 잘 설치됐는 지 확인**
 
     ```bash
     $ redis-cli
@@ -72,8 +65,6 @@
     127.0.0.1:6379> ping
     PONG
     ```
-
-   ![image.png](attachment:be4bd851-c6cb-4cf9-af8f-9e3fa83daf50:image.png)
 
 
 ### ✅ EC2에 Spring Boot 프로젝트 셋팅하기
@@ -87,16 +78,14 @@
     ```
 
 
-1. **잘 설치됐는 지 확인하기**
+2. **잘 설치됐는 지 확인하기**
 
     ```bash
     $ java -version
     ```
+    
 
-   ![Untitled](https://prod-files-secure.s3.us-west-2.amazonaws.com/e35a8144-c5ff-40f0-b123-384a331e35bb/0f47cefa-3896-4c11-91cd-0d5d3f51f9f0/Untitled.png)
-
-
-1. **Spring Boot 프로젝트에서 application.yml 정보 수정하기**
+3. **Spring Boot 프로젝트에서 application.yml 정보 수정하기**
 
    **application.yml**
 
@@ -168,13 +157,14 @@ $ java -jar -Dspring.profiles.active=prod {빌드된 jar 파일명}
 
 인텔리제이에서 database 생성 → 이름 수정 → Host 칸에 ‘RDS 엔드포인트’ 입력 → User / Password 입력 → Test Connection 성공하는지 확인하기
 
-![image.png](attachment:b80e4d07-7c29-4ccb-9901-fb1b4c87be26:image.png)
 
 만약 연결이 안된다면, RDS의 보안 그룹에서 3306 port를 열어 놓았는지 확인하기!!
 
 모든 스키마 보기 클릭 → mydb가 이미 생성 되어있는 걸 확인 가능 (RDS의 초기 데이터베이스 이름을 `mydb` 로 설정했기 때문) → table 이 생성된 걸 확인 가능 (EC2에서 Spring 서버를 띄울 때, RDS와 연결되면서 테이블 정보를 업데이트 함!)
 
-![image.png](attachment:35214c12-b45a-49aa-89e8-9aa945c8a75a:image.png)
+<img width="232" height="358" alt="스크린샷" src="https://github.com/user-attachments/assets/1b734292-f082-42ed-94f3-571e272aa2a3" />
+
+
 
 mydb 오른쪽클릭 → New → Query Console → RDS에 더미데이터 넣기
 
@@ -300,11 +290,13 @@ SECRET  약 333333개
 
 postman에서 EC2 퍼블릭 IP로 요청 보내기
 
-![image.png](attachment:c9f12334-e383-4f11-93f8-9ae6a2ea6279:image.png)
+<img width="1478" height="531" alt="스크린샷" src="https://github.com/user-attachments/assets/386ab669-54b5-4d69-9fad-67b11c89285b" />
+
 
 5.15 초
 
-![image.png](attachment:eaa67d36-5e2b-4630-ae84-3b8604411e58:image.png)
+<img width="1482" height="499" alt="스크린샷" src="https://github.com/user-attachments/assets/78056fc2-8f31-4e02-bb58-7a73c20a91ae" />
+
 
 3.94 초
 
@@ -335,216 +327,29 @@ Spring Boot에서 캐시(Cache, 임시 저장소)를 쓰려면 캐싱 기능을 
 
 ## 1. 프로젝트 루트로 이동
 
-```
-cd ~/seonghwi.kim
-```
-
 ---
 
 ## 2. Redis 의존성 추가
-
-```
-python3<<'PY'
-from pathlib import Path
-
-path = Path("build.gradle")
-text = path.read_text()
-
-redis_deps = """implementation 'org.springframework.boot:spring-boot-starter-data-redis'
-    implementation 'org.springframework.boot:spring-boot-starter-cache'"""
-
-if "spring-boot-starter-data-redis" not in text:
-    text = text.replace(
-        "implementation 'org.springframework.boot:spring-boot-starter-data-jpa'",
-        "implementation 'org.springframework.boot:spring-boot-starter-data-jpa'\n    " + redis_deps
-    )
-
-path.write_text(text)
-PY
-```
-
-확인:
-
-```bash
-grep-n"redis\|cache" build.gradle
-```
-
-정상이라면 아래처럼.
-
-```bash
-implementation 'org.springframework.boot:spring-boot-starter-data-redis'
-implementation 'org.springframework.boot:spring-boot-starter-cache'
-```
 
 ---
 
 ## 3. Redis 응답 캐시 필터 추가
 
-```bash
-mkdir-p src/main/java/org/sopt/global/config
-
-cat > src/main/java/org/sopt/global/config/RedisResponseCacheFilter.java<<'EOF'
-package org.sopt.global.config;
-
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.core.Ordered;
-import org.springframework.core.annotation.Order;
-import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.http.MediaType;
-import org.springframework.stereotype.Component;
-import org.springframework.web.filter.OncePerRequestFilter;
-import org.springframework.web.util.ContentCachingResponseWrapper;
-
-import java.io.IOException;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-import java.time.Duration;
-
-@Component
-@Order(Ordered.HIGHEST_PRECEDENCE)
-public class RedisResponseCacheFilter extends OncePerRequestFilter {
-
-    private static final Duration CACHE_TTL = Duration.ofMinutes(10);
-
-    private final StringRedisTemplate redisTemplate;
-
-    public RedisResponseCacheFilter(StringRedisTemplate redisTemplate) {
-        this.redisTemplate = redisTemplate;
-    }
-
-    @Override
-    protected boolean shouldNotFilter(HttpServletRequest request) {
-        return !isCacheTarget(request);
-    }
-
-    @Override
-    protected void doFilterInternal(
-            HttpServletRequest request,
-            HttpServletResponse response,
-            FilterChain filterChain
-    ) throws ServletException, IOException {
-        String cacheKey = buildCacheKey(request);
-
-        String cachedBody = redisTemplate.opsForValue().get(cacheKey);
-
-        if (cachedBody != null) {
-            response.setStatus(HttpServletResponse.SC_OK);
-            response.setCharacterEncoding(StandardCharsets.UTF_8.name());
-            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-            response.setHeader("X-Redis-Cache", "HIT");
-            response.getWriter().write(cachedBody);
-            return;
-        }
-
-        ContentCachingResponseWrapper responseWrapper = new ContentCachingResponseWrapper(response);
-
-        try {
-            filterChain.doFilter(request, responseWrapper);
-        } finally {
-            byte[] body = responseWrapper.getContentAsByteArray();
-
-            if (responseWrapper.getStatus() == HttpServletResponse.SC_OK && body.length > 0) {
-                Charset charset = getResponseCharset(responseWrapper);
-                String responseBody = new String(body, charset);
-
-                redisTemplate.opsForValue().set(cacheKey, responseBody, CACHE_TTL);
-                responseWrapper.setHeader("X-Redis-Cache", "MISS");
-            }
-
-            responseWrapper.copyBodyToResponse();
-        }
-    }
-
-    private boolean isCacheTarget(HttpServletRequest request) {
-        return "GET".equalsIgnoreCase(request.getMethod())
-                && "/api/v1/posts".equals(request.getRequestURI());
-    }
-
-    private String buildCacheKey(HttpServletRequest request) {
-        String queryString = request.getQueryString();
-
-        if (queryString == null || queryString.isBlank()) {
-            return "posts:list";
-        }
-
-        return "posts:list:" + queryString;
-    }
-
-    private Charset getResponseCharset(ContentCachingResponseWrapper responseWrapper) {
-        String characterEncoding = responseWrapper.getCharacterEncoding();
-
-        if (characterEncoding == null || characterEncoding.isBlank()) {
-            return StandardCharsets.UTF_8;
-        }
-
-        return Charset.forName(characterEncoding);
-    }
-}
-EOF
-```
-
 ---
 
 ## 4. Redis 실행 상태 확인
-
-```
-sudo systemctl status redis-server
-```
-
-켜져 있지 않으면:
-
-```
-sudo systemctl enable redis-server
-sudo systemctlstart redis-server
-```
-
-Redis 연결 확인:
-
-```
-redis-cliping
-```
-
-정상이면:
-
-```
-PONG
-```
 
 ---
 
 ## 5. 기존 Redis 데이터 비우기
 
-```
-redis-cli flushall
-redis-cli dbsize
-```
-
-정상이라면:
-
-```
-OK
-(integer) 0
-```
-
 ---
 
 ## 6. 다시 빌드
 
-```
-cd ~/seonghwi.kim
-./gradlew clean build-x test
-```
-
 ---
 
 ## 7. 서버 실행
-
-```
-java-jar build/libs/assignment-1.0-SNAPSHOT.jar--spring.profiles.active=prod
-```
 
 ---
 
@@ -552,20 +357,21 @@ java-jar build/libs/assignment-1.0-SNAPSHOT.jar--spring.profiles.active=prod
 
 ---
 
-![image.png](attachment:10551545-73cf-4662-934f-8171f76566b7:image.png)
+<img width="1479" height="524" alt="스크린샷" src="https://github.com/user-attachments/assets/d0595e91-d452-4247-bd2f-1ec8f387f644" />
+
 
 4.89 초
 
-![image.png](attachment:578ffb4d-2005-49a0-af1c-a76ae9c5fa24:image.png)
+<img width="1489" height="521" alt="스크린샷" src="https://github.com/user-attachments/assets/b16c765e-5c43-4fa4-b8bd-2060dbab0ca4" />
+
 
 17 m 초
 
-![image.png](attachment:ee79e034-bdfa-4b08-8129-a4240ff1b796:image.png)
 
 redis-cli monitor로 확인!
 
 ```bash
-ubuntu@ip-172-31-40-182:~$ redis-cli monitor
+$ redis-cli monitor
 OK
 1778425134.095354 [0 127.0.0.1:59440] "GET" "posts:list:boardType=FREE&page=0&size=10"
 1778425135.340409 [0 127.0.0.1:59440] "GET" "posts:list:boardType=FREE&page=0&size=10"
@@ -573,103 +379,9 @@ OK
 
 근데 한글이 깨지고 있어서 필터 코드의 문자 인코딩을 수정해야 함
 
-필터 코드 수정
+### 필터 코드 수정
 
-```bash
-cd ~/seonghwi.kim
 
-cat > src/main/java/org/sopt/global/config/RedisResponseCacheFilter.java <<'EOF'
-package org.sopt.global.config;
-
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.core.Ordered;
-import org.springframework.core.annotation.Order;
-import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.http.MediaType;
-import org.springframework.stereotype.Component;
-import org.springframework.web.filter.OncePerRequestFilter;
-import org.springframework.web.util.ContentCachingResponseWrapper;
-
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.time.Duration;
-
-@Component
-@Order(Ordered.HIGHEST_PRECEDENCE)
-public class RedisResponseCacheFilter extends OncePerRequestFilter {
-
-    private static final Duration CACHE_TTL = Duration.ofMinutes(10);
-
-    private final StringRedisTemplate redisTemplate;
-
-    public RedisResponseCacheFilter(StringRedisTemplate redisTemplate) {
-        this.redisTemplate = redisTemplate;
-    }
-
-    @Override
-    protected boolean shouldNotFilter(HttpServletRequest request) {
-        return !isCacheTarget(request);
-    }
-
-    @Override
-    protected void doFilterInternal(
-            HttpServletRequest request,
-            HttpServletResponse response,
-            FilterChain filterChain
-    ) throws ServletException, IOException {
-        String cacheKey = buildCacheKey(request);
-
-        String cachedBody = redisTemplate.opsForValue().get(cacheKey);
-
-        if (cachedBody != null) {
-            response.setStatus(HttpServletResponse.SC_OK);
-            response.setCharacterEncoding(StandardCharsets.UTF_8.name());
-            response.setContentType(MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8");
-            response.setHeader("X-Redis-Cache", "HIT");
-            response.getWriter().write(cachedBody);
-            return;
-        }
-
-        ContentCachingResponseWrapper responseWrapper = new ContentCachingResponseWrapper(response);
-
-        try {
-            filterChain.doFilter(request, responseWrapper);
-        } finally {
-            byte[] body = responseWrapper.getContentAsByteArray();
-
-            if (responseWrapper.getStatus() == HttpServletResponse.SC_OK && body.length > 0) {
-                String responseBody = new String(body, StandardCharsets.UTF_8);
-
-                redisTemplate.opsForValue().set(cacheKey, responseBody, CACHE_TTL);
-                responseWrapper.setHeader("X-Redis-Cache", "MISS");
-                responseWrapper.setCharacterEncoding(StandardCharsets.UTF_8.name());
-                responseWrapper.setContentType(MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8");
-            }
-
-            responseWrapper.copyBodyToResponse();
-        }
-    }
-
-    private boolean isCacheTarget(HttpServletRequest request) {
-        return "GET".equalsIgnoreCase(request.getMethod())
-                && "/api/v1/posts".equals(request.getRequestURI());
-    }
-
-    private String buildCacheKey(HttpServletRequest request) {
-        String queryString = request.getQueryString();
-
-        if (queryString == null || queryString.isBlank()) {
-            return "posts:list";
-        }
-
-        return "posts:list:" + queryString;
-    }
-}
-EOF
-```
 
 # Redis 기존 캐시 삭제
 
@@ -687,43 +399,19 @@ OK
 (integer) 0
 ```
 
-![image.png](attachment:5d3389e5-e4ce-40b2-befa-753b3ed2319b:image.png)
+<img width="1479" height="526" alt="스크린샷" src="https://github.com/user-attachments/assets/669ba726-02f5-4711-9bf6-81a6e53e9c83" />
+
 
 4.83 초
 
-![image.png](attachment:b57ca792-f8ea-4db5-8763-8f048298c2c0:image.png)
+<img width="1452" height="521" alt="스크린샷" src="https://github.com/user-attachments/assets/b7d266e6-0733-4acd-b108-18f88cda11c1" />
+
 
 19 m 초
 
-![image.png](attachment:fca9cc51-cf5a-4154-9bb2-de1046c39c90:image.png)
+
 
 성능 개선 확인!
-
-```bash
-ubuntu@ip-172-31-40-182:~$ redis-cli monitor
-OK
-1778425632.606135 [0 127.0.0.1:50730] "GET" "posts:list:boardType=FREE&page=0&size=10"
-1778425634.014201 [0 127.0.0.1:50730] "GET" "posts:list:boardType=FREE&page=0&size=10"
-1778425634.882454 [0 127.0.0.1:50730] "GET" "posts:list:boardType=FREE&page=0&size=10"
-1778425635.675552 [0 127.0.0.1:50730] "GET" "posts:list:boardType=FREE&page=0&size=10"
-1778425636.508861 [0 127.0.0.1:50730] "GET" "posts:list:boardType=FREE&page=0&size=10"
-1778425637.396581 [0 127.0.0.1:50730] "GET" "posts:list:boardType=FREE&page=0&size=10"
-1778425638.339524 [0 127.0.0.1:50730] "GET" "posts:list:boardType=FREE&page=0&size=10"
-1778425639.325743 [0 127.0.0.1:50730] "GET" "posts:list:boardType=FREE&page=0&size=10"
-1778425640.221928 [0 127.0.0.1:50730] "GET" "posts:list:boardType=FREE&page=0&size=10"
-1778425641.132754 [0 127.0.0.1:50730] "GET" "posts:list:boardType=FREE&page=0&size=10"
-1778425642.049242 [0 127.0.0.1:50730] "GET" "posts:list:boardType=FREE&page=0&size=10"
-1778425642.878377 [0 127.0.0.1:50730] "GET" "posts:list:boardType=FREE&page=0&size=10"
-1778425644.007854 [0 127.0.0.1:50730] "GET" "posts:list:boardType=FREE&page=0&size=10"
-1778425645.031739 [0 127.0.0.1:50730] "GET" "posts:list:boardType=FREE&page=0&size=10"
-1778425645.955631 [0 127.0.0.1:50730] "GET" "posts:list:boardType=FREE&page=0&size=10"
-1778425646.925540 [0 127.0.0.1:50730] "GET" "posts:list:boardType=FREE&page=0&size=10"
-1778425647.790254 [0 127.0.0.1:50730] "GET" "posts:list:boardType=FREE&page=0&size=10"
-1778425648.803662 [0 127.0.0.1:50730] "GET" "posts:list:boardType=FREE&page=0&size=10"
-1778425649.901361 [0 127.0.0.1:50730] "GET" "posts:list:boardType=FREE&page=0&size=10"
-1778425651.063544 [0 127.0.0.1:50730] "GET" "posts:list:boardType=FREE&page=0&size=10"
-1778425652.125046 [0 127.0.0.1:50730] "GET" "posts:list:boardType=FREE&page=0&size=10"
-```
 
 기존 응답 시간: 4.83초
 
@@ -777,7 +465,8 @@ Redis 캐시 적용 후 응답 시간: 19ms = 0.019초
 
 `k6`는 사용자인척 요청을 보내는 툴이다.
 
-![Untitled](https://prod-files-secure.s3.us-west-2.amazonaws.com/e35a8144-c5ff-40f0-b123-384a331e35bb/54fb4913-3f3b-4bff-89e5-63a40a7a8869/Untitled.png)
+<img width="687" height="406" alt="image" src="https://github.com/user-attachments/assets/c672f6d9-aec9-42bc-b391-b00179434d94" />
+
 
 원래라면 사용자가 직접 서비스에 요청을 보내야 하는데, `k6`는 여러 명의 사용자를 대신해서 요청을 보내는 툴이다.
 
@@ -861,11 +550,12 @@ TPS (Transactions Per Second) 또는 처리량 (Throughput)
 
 ### Redis 적용 전
 
-![image.png](attachment:397c99be-fc6b-47db-90ea-c4c60a0b60c6:image.png)
+<img width="732" height="649" alt="스크린샷" src="https://github.com/user-attachments/assets/d1bfe94d-da35-452b-8ac0-1cd8f4f875d4" />
 
 ### Redis 적용 후
 
-![image.png](attachment:332bd692-8fbc-4988-85eb-e578062d117f:image.png)
+<img width="805" height="654" alt="스크린샷" src="https://github.com/user-attachments/assets/2084f1fc-4f47-4adb-8238-9b1023cd07f9" />
+
 
 ### 📈 Throughput 비교 결과
 
