@@ -76,9 +76,15 @@ spring:
     password: password
 ```
 
-prod 환경에서도 Redis host가 `localhost`인 이유는 Spring Boot와 Redis가 같은 EC2 안에서 실행되기 때문이다.
+이번 환경에서는 Redis를 EC2 내부에 직접 설치했기 때문에 설정은 단순했다.
 
-즉, Spring Boot 입장에서는 Redis가 외부 서버가 아니라 같은 서버 내부의 6379번 포트에서 실행 중인 서비스이다.
+Spring Boot 입장에서는 Redis가 같은 서버의 localhost:6379에서 실행되는 서비스였기 때문이다.
+
+하지만, 이 구조는 EC2 한 대에 애플리케이션 서버와 Redis가 함께 올라가는 구조이기 때문에, EC2에 장애가 발생하면 WAS와 Redis가 동시에 영향을 받는다.
+
+또한, 부하 테스트의 결과를 해석할 때도 Spring Boot와 Redis가 같은 서버 자원을 공유한다는 점을 고려해야 한다.
+
+따라서, 실제 운영 환경에서는 Redis를 애플리케이션 서버와 분리하거나, AWS ElastiCache 같은 관리형 Redis를 사용하는 방식을 고려할 수 있다.
 
 <br>
 
@@ -248,8 +254,36 @@ public class BoardService {
 
 Throughput은 보통 TPS(Transaction Per Second)라는 단위로 표현한다.
 
-예를 들어 서버가 1초에 100개의 API 요청을 처리할 수 있다면, 해당 서버의 처리량은 100 TPS라고 할 수 있다.
+예를 들어, 서버가 1초에 100개의 API 요청을 처리할 수 있다면, 해당 서버의 처리량은 100 TPS라고 할 수 있다.
 
+### Throughput만 보면 부족한 이유
+
+하지만, 부하 테스트 결과를 볼 때 Throughput만으로 성능이 좋아졌다고 판단하기는 어렵다.
+
+Throughput은 1초에 처리한 요청 수를 보여주지만, 일부 요청이 얼마나 느렸는지나 실패 요청이 있었는지는 보여주지 않기 때문이다.
+
+예를 들어, Redis 적용 후 TPS가 증가했더라도, 일부 요청이 3초 이상 걸렸다면 실제 사용자 입장에서는 여전히 느리게 느껴질 수 있다.
+
+따라서, Redis 적용 전후를 비교할 때는 Throughput뿐만 아니라 평균 응답 시간, p95/p99 응답 시간, 실패 요청 비율도 함께 확인해야 한다.
+
+- `http_req_duration`
+  - 요청이 응답을 받기까지 걸린 시간
+  - 평균값뿐만 아니라 p95, p99 값을 함께 확인하는 것이 좋다.
+
+- `http_req_failed`
+  - 실패한 요청 비율
+  - Throughput이 높아도 실패 요청이 많으면 정상적인 성능 개선이라고 보기 어렵다.
+
+- `checks`
+  - 응답 상태 코드가 정상인지 확인하는 지표
+  - 서버가 응답은 했지만 500 에러를 반환하는 경우도 구분할 수 있다.
+
+- `p95`, `p99`
+  - p95는 전체 요청 중 95%가 어느 정도 시간 안에 처리되었는지를 의미한다.
+  - p99는 더 극단적으로 느린 요청이 있는지 확인할 때 유용하다.
+
+즉, Redis 적용 전후 성능을 비교할 때는 단순히 TPS가 얼마나 증가했는지만 볼 것이 아니라,
+응답 시간이 안정적으로 줄었는지, 실패 요청이 발생하지 않았는지, 대부분의 요청이 일정한 시간 안에 처리되었는지도 함께 확인해야 한다.
 
 ### k6란?
 
@@ -273,6 +307,117 @@ export default function () {
 위 스크립트는 EC2에서 실행 중인 Spring Boot 서버의 `/boards` API로 요청을 보내는 역할을 한다.
 
 Redis 캐싱 효과를 더 정확히 확인하려면 같은 URL을 반복 요청하는 것이 좋다.
+
+### k6 테스트 스크립트 보완
+
+기존 스크립트는 단순히 `/boards` API에 GET 요청만 보내는 구조였다.
+
+```javascript
+import http from 'k6/http';
+
+export default function () {
+  http.get('http://{EC2 IP 주소}:8080/boards');
+}
+```
+
+이 방식으로도 Throughput은 확인할 수 있지만, 응답이 정상적으로 왔는지나 요청 실패율이 어느 정도인지 확인하기에는 부족하다.
+
+따라서 `check`와 `thresholds`를 추가해 테스트 기준을 조금 더 명확하게 잡을 수 있다.
+
+```javascript
+import http from 'k6/http';
+import { check, sleep } from 'k6';
+
+export const options = {
+  vus: 30,
+  duration: '10s',
+  thresholds: {
+    http_req_failed: ['rate<0.01'],
+    http_req_duration: ['p(95)<1000'],
+  },
+};
+
+export default function () {
+  const res = http.get('http://{EC2 IP 주소}:8080/boards?page=1&size=10');
+
+  check(res, {
+    'status is 200': (r) => r.status === 200,
+  });
+
+  sleep(1);
+}
+```
+
+위 스크립트에서는 다음 내용을 추가했다.
+
+- `check`
+  - 응답 상태 코드가 200인지 확인한다.
+  - 요청이 성공적으로 처리되었는지 판단할 수 있다.
+
+- `thresholds`
+  - 테스트가 성공했다고 판단할 기준을 정한다.
+  - 예를 들어 `http_req_failed: ['rate<0.01']`은 실패 요청 비율이 1% 미만이어야 한다는 의미이다.
+  - `http_req_duration: ['p(95)<1000']`은 전체 요청 중 95%가 1초 안에 처리되어야 한다는 의미이다.
+
+- `sleep(1)`
+  - 각 가상 사용자가 요청을 보낸 뒤 1초 정도 기다리도록 한다.
+  - 실제 사용자가 쉬지 않고 계속 요청만 보내는 것은 아니기 때문에, 조금 더 현실적인 요청 흐름을 만들 수 있다.
+
+이렇게 작성하면 단순히 몇 개의 요청을 처리했는지뿐만 아니라, 요청이 정상적으로 성공했는지와 응답 시간이 일정 기준 안에 들어오는지도 함께 확인할 수 있다.
+
+### k6 시나리오 구성하기
+
+단순히 30명의 가상 사용자가 10초 동안 요청을 보내는 방식도 가능하지만, 실제 서비스에서는 사용자가 갑자기 한 번에 몰리거나, 일정 시간 동안 점점 증가하는 경우도 있다.
+
+그래서 k6의 `scenarios`를 사용하면 부하가 증가하는 흐름을 더 명확하게 설정할 수 있다.
+
+```javascript
+import http from 'k6/http';
+import { check, sleep } from 'k6';
+
+export const options = {
+  scenarios: {
+    board_read_test: {
+      executor: 'ramping-vus',
+      stages: [
+        { duration: '10s', target: 10 },
+        { duration: '20s', target: 30 },
+        { duration: '10s', target: 0 },
+      ],
+    },
+  },
+  thresholds: {
+    http_req_failed: ['rate<0.01'],
+    http_req_duration: ['p(95)<1000'],
+  },
+};
+
+export default function () {
+  const res = http.get('http://{EC2 IP 주소}:8080/boards?page=1&size=10');
+
+  check(res, {
+    'status is 200': (r) => r.status === 200,
+  });
+
+  sleep(1);
+}
+```
+
+위 시나리오는 다음과 같이 동작한다.
+
+```text
+10초 동안 가상 사용자를 10명까지 증가
+↓
+20초 동안 가상 사용자 30명까지 증가
+↓
+10초 동안 가상 사용자를 0명으로 감소
+```
+
+즉, 처음부터 30명의 사용자가 한 번에 요청을 보내는 것이 아니라, 사용자가 점점 늘어나는 상황을 가정한 테스트이다.
+
+이 방식은 서버가 부하 증가에 따라 안정적으로 응답하는지 확인하기 좋다.
+
+특히 Redis 적용 전후를 비교할 때 같은 시나리오로 테스트하면, 캐싱을 적용했을 때 단순히 처리량만 증가했는지뿐만 아니라 부하가 늘어나는 상황에서도 응답 시간이 안정적으로 유지되는지 확인할 수 있다.
 
 ### k6 실행 명령어
 
@@ -388,6 +533,4 @@ k6 run --vus 30 --duration 10s script.js
 | Redis 적용 | 약 332.61ms | 약 88.62 TPS |
 
 즉, Redis 캐싱을 적용한 결과 처리량은 약 6.5배 증가했고, 평균 응답 시간은 약 1.99초에서 약 332ms로 감소했다.
-
-<br>
 
